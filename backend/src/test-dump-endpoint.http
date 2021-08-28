@@ -1,0 +1,8 @@
+POST http://localhost:5000/api/v1/dumps
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="first"; filename="dump2.gcdump"
+
+< /Users/dmitrijafonin/Downloads/dump2.gcdump
+--boundary--
