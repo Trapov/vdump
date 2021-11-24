@@ -13,10 +13,10 @@ namespace Vdump.Api {
           (x, c) => c.ReadFrom.Configuration(x.Configuration)
         )
         .ConfigureWebHostDefaults(webBuilder => {
-          webBuilder.UseStartup<Startup>().UseKestrel(options =>
-          {
+          webBuilder.UseStartup<Startup>().UseKestrel(options => {
             options.Limits.MaxRequestBodySize = 1 * 1024 * 1024 * 200;
-          });;
+          });
+          ;
         });
   }
 }

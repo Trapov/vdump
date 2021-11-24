@@ -1,10 +1,10 @@
 // unset
 
-namespace Vdump.Api.Endpoints
+namespace Vdump.Api
 {
   using Microsoft.AspNetCore.Routing;
 
-  public interface IEndpointConfiguration {
+  public interface IEndpointGroup {
     public void Configure(IEndpointRouteBuilder app);
   }
 }

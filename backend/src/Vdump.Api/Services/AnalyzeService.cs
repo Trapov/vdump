@@ -3,9 +3,7 @@
 namespace Vdump.Api.Services {
   using System;
   using System.Collections.Generic;
-  using System.IO;
   using System.Linq;
-  using System.Net;
   using System.Threading;
   using System.Threading.Tasks;
 
@@ -15,14 +13,35 @@ namespace Vdump.Api.Services {
 
   using Graphs;
 
-  using Microsoft.Diagnostics.Tracing.AutomatedAnalysis;
   using Microsoft.Extensions.Logging;
 
-  internal sealed partial class AnalyzeService {
-    private readonly ILogger<AnalyzeService> _logger;
+  using Stores;
 
-    public AnalyzeService(ILogger<AnalyzeService> logger) {
+  internal sealed class AnalyzeService : IAnalyzeService {
+    private readonly ILogger<AnalyzeService> _logger;
+    private readonly IStore<MemoryGraphView> _store;
+
+    public AnalyzeService(ILogger<AnalyzeService> logger, IStore<MemoryGraphView> store) {
       _logger = logger;
+      _store = store;
+    }
+
+    public Task<MemoryGraphView> From(MemoryDumpRequest request,
+      CancellationToken cancellationToken) {
+      try {
+        return _store.GetOrAdd(request.Id, () => {
+          var memoryDump = new GCHeapDump(request.Stream, request.FileName);
+          return Task.FromResult(new MemoryGraphView {
+            Id = request.Id,
+            TotalSize = memoryDump.MemoryGraph.TotalSize,
+            ReportItems = GetReportItem(memoryDump.MemoryGraph).ToArray()
+          });
+        });
+      }
+      catch (Exception ex) {
+        _logger.LogError(ex, "Something went wrong while reading the dump file");
+        throw new FileDumpIsWrongOrCorruptedException();
+      }
     }
 
     private static IEnumerable<ReportItem> GetReportItem(Graph memoryGraph) {
@@ -46,29 +65,5 @@ namespace Vdump.Api.Services {
         };
       }
     }
-    
-    public async Task<MemoryGraphView> Analyze(Stream stream, string fileName, CancellationToken cancellationToken) {
-      try
-      {
-        var memoryDump = new GCHeapDump(stream, fileName);
-
-        return new MemoryGraphView
-        {
-          Id = Guid.NewGuid(),
-          TotalSize = memoryDump.MemoryGraph.TotalSize,
-          ReportItems = GetReportItem(memoryDump.MemoryGraph).ToArray()
-        };
-      }
-      catch (Exception ex)
-      {
-        _logger.LogError(ex, "Something went wrong while reading the dump file");
-        throw new FileDumpIsWrongOrCorruptedException();
-      }
-    }
   }
-
-  public interface IAnalyzeService {
-    Task<MemoryGraphView> GetOrAdd(Guid id, Stream stream, string fileStream, CancellationToken cancellationToken);
-  }
-  
 }

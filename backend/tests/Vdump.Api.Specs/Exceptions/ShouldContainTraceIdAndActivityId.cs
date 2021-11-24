@@ -33,11 +33,11 @@ namespace Vdump.Api.Specs.Exceptions {
       }
     }
 
-    private sealed class ErrorTestConfiguration : IEndpointConfiguration {
+    private sealed class ErrorTest : IEndpointGroup {
       private readonly string _pattern;
       private readonly Action _throwEx;
 
-      public ErrorTestConfiguration(string pattern, Action throwEx) {
+      public ErrorTest(string pattern, Action throwEx) {
         _pattern = pattern;
         _throwEx = throwEx;
       }
@@ -50,7 +50,7 @@ namespace Vdump.Api.Specs.Exceptions {
     [Fact]
     public async Task WhenGeneralErrorOccured() {
       var factory = _applicationFactory.WithWebHostBuilder(x => x.ConfigureServices(s => {
-        s.AddSingleton<IEndpointConfiguration>(new ErrorTestConfiguration("/test", () => throw new Exception()));
+        s.AddSingleton<IEndpointGroup>(new ErrorTest("/test", () => throw new Exception()));
       }));
       var client = factory.CreateClient();
       var response = await client.GetAsync("/test");
@@ -66,7 +66,7 @@ namespace Vdump.Api.Specs.Exceptions {
     [Fact]
     public async Task WhenUserFriendlyExceptionOccured() {
       var factory = _applicationFactory.WithWebHostBuilder(x => x.ConfigureServices(s => {
-        s.AddSingleton<IEndpointConfiguration>(new ErrorTestConfiguration("/test",
+        s.AddSingleton<IEndpointGroup>(new ErrorTest("/test",
           () => throw new UserNotFoundException("User not found")));
       }));
       var client = factory.CreateClient();
